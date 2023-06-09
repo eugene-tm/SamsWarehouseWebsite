@@ -1,0 +1,472 @@
+﻿@model IEnumerable<SamsWarehouse.Models.ShoppingListViewModel>
+
+@{
+	ViewData["Title"] = "Home Page";
+
+	string userId = Context.Session.GetString("UserId").ToString();
+	string theme = Context.Session.GetString("theme").ToString();
+}
+
+<div id="HomeContainer">
+	<partial name="_Home.cshtml" />
+</div>
+
+
+<!-- SPINNER MODAL -->
+<div class="modal" id="SpinnerModal" tabindex="-1" data-bs-backdrop="false">
+	<div class="modal-dialog modal-dialog-centered d-flex justify-content-center">
+
+		<div class="dot-spinner">
+			<div class="dot-spinner__dot"></div>
+			<div class="dot-spinner__dot"></div>
+			<div class="dot-spinner__dot"></div>
+			<div class="dot-spinner__dot"></div>
+			<div class="dot-spinner__dot"></div>
+			<div class="dot-spinner__dot"></div>
+			<div class="dot-spinner__dot"></div>
+			<div class="dot-spinner__dot"></div>
+		</div>
+	</div>
+</div>
+
+
+
+<script>
+
+	// MODALS 
+
+	function showSpinner() {
+		$('#SpinnerModal').modal('show')
+	}
+
+	function hideSpinner() {
+		$('#SpinnerModal').modal('hide')
+	}
+
+	async function showSettingsModal() {
+		$('#SettingsModal').modal('show')
+	}
+
+	async function showNewListModal() {
+		$('#NewListNameModal').modal('show')
+	}
+
+	async function showEditNameModal(currentListId) {
+		$('#ListModal').modal('hide')
+
+		$('#EditNameModal').modal('show')
+	}
+
+	// MODALS END ^
+
+	async function toggleDarkMode() {
+		let currentTheme = localStorage.getItem('theme');
+
+		console.log(currentTheme);
+
+		// IF current theme is dark --> switch to light and send changes to the controller
+		if (currentTheme && currentTheme == 'dark') {
+			localStorage.setItem('theme', 'light');
+
+			await fetch(`/Home/SetTheme?theme=light&userId=${@userId}`, { method: 'PUT' });
+
+			document.getElementById('themeStyle').setAttribute('href', '/css/LightTheme.css');
+			console.log("set to light theme")
+		}
+		// ELSE change theme to dark and send changes to the controller
+		else {
+			localStorage.setItem('theme', 'dark');
+
+			await fetch(`/Home/SetTheme?theme=dark&userId=${@userId}`, { method: 'PUT' });
+
+			document.getElementById('themeStyle').setAttribute('href', '/css/DarkTheme.css');
+			console.log("set to dark theme");
+		}
+	}
+
+	// Global list ID variable that is set every time a list modal is opened
+	let currentListId;
+
+	async function showListModal(listId) {
+		showSpinner();
+
+		// Retrieves data from the controller
+		let response = await fetch(`/Home/EditList?shoppingListId=${listId}`);
+		let htmlResponse = await response.text();
+
+		// Sets the content of the modal based on the data from the controller
+		document.getElementById('ModalBody').innerHTML = htmlResponse;
+		document.getElementById('ModalTitle').innerHTML = "Edit Your Shopping List";
+
+		// sets the list ID
+		currentListId = listId;
+		console.log("shoppingListId = " + listId);
+
+		hideSpinner();
+
+		$('#ListModal').modal('show');
+
+		// Event listener listens for the listModal closing and refreshes the home screen each time
+		var modal = document.getElementById('ListModal');
+		modal.addEventListener('hidden.bs.modal', function () {
+			console.log("modal hidden");
+			updateHomePage();
+		})
+
+		
+	}
+
+
+	async function createNewList(e) {
+		e.preventDefault();
+		showSpinner();
+
+		let newListName = document.getElementById('NewListName').value;
+
+		// client side validation preventing long list names
+		if(newListName.length > 30)
+		{
+			hideSpinner();
+			alert('List names must be less than 30 characters')
+			return;
+		}
+
+		console.log(newListName);
+		console.log(@userId);
+
+		// Sends the new list name and user Id to the controller
+		await fetch(`/Home/CreateNewList?userId=${@userId}`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ ListName: newListName })
+		});
+
+		$('#NewListNameModal').modal('hide');
+		updateHomePage();
+		hideSpinner();
+		showToast('New List Created','success');
+	}
+
+
+	async function editListName(e) {
+		e.preventDefault();
+		showSpinner();
+		let newName = document.getElementById('EditListName').value;
+
+		// client side validation preventing long list names
+		if (newName.length > 30) {
+			hideSpinner();
+			alert('List names must be less than 30 characters')
+			return;
+		}
+
+		console.log(newName);
+
+		// Sends the new list name for the current list to the controller
+		await fetch(`/Home/EditListName?shoppingListId=${currentListId}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ ListName: newName })
+		});
+
+		hideSpinner();
+
+		$('#EditNameModal').modal('hide');
+
+		updateTable(currentListId)
+
+		showToast('List Name Changed','success')
+	}
+
+
+
+	async function addItem(e) {
+		e.preventDefault();
+
+		console.log("addItem attempted");
+
+		// This block of code disables the button with a spinner temporarily
+		let button = document.getElementById('btnAddItem');
+		button.setAttribute('disabled', 'disabled');
+		button.innerHTML = `
+						<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						Saving...
+						`;
+		console.log("button disabled")
+
+		// Grabs the select list and number fields from the ADD ITEM section of the list modal
+		// These lines seem irrelevant, but leave them in anyway because they're helpful for debugging
+		let inputFields = document.querySelectorAll('#AddItemContainer input[type="number"], #AddItemContainer select');
+
+		console.log("input fields checked");
+		console.log(inputFields);
+
+		// CREATING A SINGLE JSON OBJECT
+		let itemNameForm = document.getElementById("AddItemContainer").querySelector("#ListItemName").value;
+		let itemQuantityForm = document.getElementById("AddItemContainer").querySelector("#ListItemQuantity").value;
+
+		let itemData = {
+			ListItemName: itemNameForm,
+			ListItemQuantity: itemQuantityForm
+		};
+
+		if(itemData.ListItemQuantity <1 || itemData.ListItemQuantity > 1000)
+		{
+			showToast("Please enter a valid quantity", "error");
+			//alert('Please enter a valid quantity');
+			button.removeAttribute('disabled');
+			button.innerHTML = 'Add Item';
+			return;
+		}
+
+		console.log("JSON Object created");
+		console.log(itemData);
+
+		// POST the home to the controller
+		let response = await fetch(`/Home/AddItemToList?listId=${currentListId}`, {
+			method: "POST",
+			headers: {
+				'content-type': 'application/json'
+			},
+			body: JSON.stringify(itemData)
+		});
+
+		console.log("sent to controller");
+
+		// If the response comes back OK, update the table and resume the add button
+		if (response.ok) {
+			console.log(itemData);
+
+			updateTable(currentListId);
+
+			button.removeAttribute('disabled');
+			button.innerHTML = 'Add Item';
+			console.log("item added successfully")
+			showToast('Item Added','success')
+		}
+		// Resume normal button even if nothing happens
+		else {
+			button.removeAttribute('disabled');
+			button.innerHTML = 'Add Item';
+		}
+
+
+	}
+
+	function confirmDelete(e, itemCount) {
+
+		showToast('Click to confirm item deletion','confirm', itemCount, 'item');
+	}
+
+
+	function confirmListDelete(e) {
+
+		// We use 11111 here because no user can enter this number. 
+		// This int is never used, simply required to avoid nulls in the controller when the delete 
+		// is occuring
+		showToast('Click to confirm list deletion','confirm', 1111 , 'list');
+	}
+
+
+
+	async function handleEditSubmit(e) {
+		// stops the page from refreshing
+		e.preventDefault();
+		console.log("handleEdit attempted")
+
+		// This block of code disables the button with a spinner temporarily
+		let button = document.getElementById('btnEdit');
+		button.setAttribute('disabled', 'disabled');
+		button.innerHTML = `
+					<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+					Saving...
+					`;
+		console.log("button disabled")
+
+		// Creating a variable that goes to out shopping list container input fields and grabs the
+		// quantity value (type=number) and the name from the select list
+		let inputFields = document.querySelectorAll('#ShoppingListContainer input[type="number"], #ShoppingListContainer select');
+
+		// creating an array that will be sent to the controller
+		let itemData = [];
+
+		// Loop through all input fields, get their values, and add to itemData array
+		for (let i = 0; i < inputFields.length; i++) {
+
+			let currentField = inputFields[i];
+			// gets the NAME, i.e. ItemQuantity
+			let fieldName = currentField.getAttribute('name');
+			// gets the VALUE, i.e. 6
+			let fieldValue = currentField.value;
+
+			// validation: if the json object contains both a name and value --> proceed
+			if (fieldName && fieldValue) {
+				// creating an empty json object
+				let item = {};
+
+				// if the fieldName is ItemName, assign the item name to the VALUE
+				if (fieldName.endsWith('ListItemName')) {
+
+					item.ListItemName = fieldValue;
+
+					// Check if the next field is the quantity field by getting the attribute of inputFields+1 (next)
+					// and seeing if its a quantity field.
+					if (inputFields[i + 1].getAttribute('name').endsWith('ListItemQuantity')) {
+						// We have to say inputFields[i+1] because we are jumping ahead in the loop to grab the value
+						item.ListItemQuantity = inputFields[i + 1].value;
+						// Then we have to make up for our jump by incrememting i, otherwise the loop will be thrown out
+						i++;
+
+						// Client side validation that bails from the function if values are invalid
+						if (item.ListItemQuantity < 1 || itemData.ListItemQuantity > 1000) {
+							showToast("Please enter a valid quantity", "error");
+							//alert('Please enter a valid quantity');
+							button.removeAttribute('disabled');
+							button.innerHTML = 'Save Changes';
+							return;
+						}
+					}
+					// finally push the previously empty json object into the array
+					itemData.push(item);
+				}
+			}
+		}
+
+		console.log("JSON object created");
+		console.log(itemData);
+
+		// POST the home to the controller
+		let response = await fetch(`/Home/UpdateList?listId=${currentListId}`, {
+			method: "POST",
+			headers: {
+				'content-type': 'application/json'
+			},
+			body: JSON.stringify(itemData)
+		});
+
+		console.log("sent to controller");
+
+		// updates the table and reenables the save button
+		if (response.ok) {
+			console.log(itemData);
+
+			updateTable(currentListId);
+
+			button.removeAttribute('disabled');
+			button.innerHTML = 'Save Changes';
+			console.log("changes saved successfully")
+		}
+		// reenable the save button without updating
+		else
+		{
+			button.removeAttribute('disabled');
+			button.innerHTML = 'Add Item';
+		}
+	}
+
+	async function updateTable(Id) {
+		// get data from the controller
+		let response = await fetch(`/Home/EditList?shoppingListId=${Id}`);
+		console.log(Id);
+		//console.log(response);
+		// set the HTML of the partial view by ID (ShoppingListContainer)
+		let htmlResponse = await response.text();
+		document.getElementById('ShoppingListContainer').innerHTML = htmlResponse;
+		console.log("table updated")
+	}
+
+	async function updateHomePage() {
+
+		// We use an extra step in here (tempElement) so that the navbar isnt part of our refresh
+
+		let response = await fetch(`/Home/Index`);
+		let htmlResponse = await response.text();
+
+		// we create a temp element and set the html to our Home/Index code
+		let tempElement = document.createElement('div');
+		tempElement.innerHTML = htmlResponse;
+
+		// get the #HomeContainer code out of the rest of the code
+		let homeContainerContent = tempElement.querySelector('#HomeContainer').innerHTML;
+		//console.log(homeContainerContent);
+
+		// Update the HomeContainer with the extracted content
+		document.getElementById('HomeContainer').innerHTML = homeContainerContent;
+
+		console.log("home refreshed");
+	}
+
+	
+	function showToast(text, type, itemCount, deleteType){
+		console.log('toast attempted');
+		let backgroundColor;
+		switch (type){
+			case 'success':
+				backgroundColor = "linear-gradient(to right, #54c748, #34d97e)"
+				break;
+
+			case 'error':
+				backgroundColor = "linear-gradient(to right, #ff5e00, #de8c09)"
+				break;
+
+			case 'confirm':
+				backgroundColor = "linear-gradient(to right, #3e5fc9, #5594e0)";
+				console.log('item count = ' + itemCount);
+				break;
+
+			default:
+				break;
+		}
+
+		Toastify({
+			text: text,
+			duration: 2000, // milliseconds
+			// destination: "https://github.com/apvarun/toastify-js",
+			newWindow: true,
+			// close: true,
+			gravity: "top", // `top` or `bottom`
+			position: "left", // `left`, `center` or `right`
+			stopOnFocus: true, // Prevents dismissing of toast on hover
+			style: {
+				background: backgroundColor,
+			},
+			onClick: async function () {
+				if (deleteType != null)
+				{
+					console.log('item count = ' + itemCount)
+					console.log('list id = ' + currentListId)
+					// to the controller:
+					let response = await fetch(`/Home/HandleDeletes?type=${deleteType}&itemCount=${itemCount}&shoppingListId=${currentListId}`, {
+						method: "DELETE"
+					});
+
+					//if (response.ok) {
+					updateTable(currentListId);
+					console.log('deleted with confirmation')
+					if(itemCount == 1111){
+						$('#ListModal').modal('hide');
+						showToast("List Successfully Deleted", "success");
+					}
+					else{
+						showToast("Item Successfully Deleted", "success");
+					}
+				}
+
+			}
+		}).showToast();
+	}
+
+
+
+</script>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+}
+

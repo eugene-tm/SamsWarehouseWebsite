@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:stEvt="http://ns.adobe.com/xap/1.0/sType/ResourceEvent#"
+   xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#"
+   xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"
+   xmlns:xmpG="http://ns.adobe.com/xap/1.0/g/"
+   xmlns:stDim="http://ns.adobe.com/xap/1.0/sType/Dimensions#"
+   xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/t/pg/"
+   xmlns:xmpGImg="http://ns.adobe.com/xap/1.0/g/img/"
+   xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+   xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/"
+   xmlns:x="adobe:ns:meta/"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xml:space="preserve"
+   enable-background="new 0 0 422 437"
+   viewBox="0 0 422 437"
+   height="437px"
+   width="422px"
+   y="0px"
+   x="0px"
+   id="cart"
+   version="1.1"><defs
+   id="defs17" />
+<path
+   id="path12"
+   d="M400.5,201.5l-274.5,45c-25.5,22.5,1.504,42,1.504,42L396,290v37.5l-295.5-3  c-12-7.5-20.992-31.5-24-52.5c-3-21,19.5-43.5,19.5-43.5L49.508,53H24l-6-33h64.504L99,74l307.5-1.5L400.5,201.5z M153,341  c22.367,0,40.5,18.129,40.5,40.5c0,22.367-18.133,40.5-40.5,40.5c-22.371,0-40.496-18.133-40.496-40.5  C112.504,359.129,130.629,341,153,341z M351,341c22.375,0,40.5,18.129,40.5,40.5c0,22.367-18.125,40.5-40.5,40.5  c-22.363,0-40.5-18.133-40.5-40.5C310.5,359.129,328.637,341,351,341z"
+   clip-rule="evenodd"
+   fill-rule="evenodd" />
+<text
+   id="text21"
+   y="178.57475"
+   x="140.10135"
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:85.33333588px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none"
+   xml:space="preserve"><tspan
+     y="178.57475"
+     x="140.10135"
+     id="tspan19">S W</tspan></text>
+</svg>

@@ -1,0 +1,130 @@
+﻿@model IEnumerable<SamsWarehouse.Models.ShoppingListViewModel>
+
+@{
+	List<Item> allProducts = ViewBag.AllProducts;
+
+	// We grab a shoppingListId from the controller so we know which data to retrieve for our refresh (startTimer() js)
+	int idForTimer = ViewBag.ListId;
+	bool showNewItem = false;
+
+	int itemCount = 1;
+	double totalPrice = 0;
+
+}
+
+
+<div id="ShoppingListContainer">
+
+	<!-- Quantity and Item are saved to this form -->
+	@using (Html.BeginForm("UpdateList", "Home", FormMethod.Post))
+	{
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">#</th>
+					<th scope="col">Item</th>
+					<th scope="col-2">Quantity</th>
+					<th scope="col">Unit</th>
+					<th scope="col">Price Per Each</th>
+					<th scope="col">Price</th>
+					<th scope="col-1"></th>
+
+				</tr>
+			</thead>
+			<tbody>
+				<div style="display: flex; align-items: center; justify-content: space-between;">
+					<h3>
+						@if (Model != null && Model.Any() && Model.FirstOrDefault().ListName != null)
+						{
+							@Model.FirstOrDefault().ListName
+						}
+					</h3>
+					<div>
+						<input type="button" value="Edit List Name" class="btn btn-sm btn-warning mb-3" onclick="showEditNameModal()" />
+						<input type="button" value="Delete List" class="btn btn-sm btn-danger mb-3" onclick="confirmListDelete(event)" />
+					</div>
+				</div>
+
+				@if (Model.Count() > 0)
+				{
+					@foreach (var item in Model)
+					{
+						<tr>
+							<td class="">
+								@itemCount
+							</td>
+							<td>
+								<!-- Generates a dropdown list that is MODEL BOUND and can be used as a form -->
+								@Html.DropDownListFor(c => item.ListItemName, new SelectList(
+								allProducts, "ItemName", "ItemName"), new {
+								@class = "form-select form-input", @id = "ListItemName"})
+
+							</td>
+
+							<td>
+								<!-- Creates a number-type textbox that can be used as a form -->
+								@Html.TextBoxFor(m => item.ListItemQuantity, new {
+								@class = "form-control form-input", type = "number", min = 1, @id = "ListItemQuantity" })
+							</td>
+							<td>@item.ListItemUnit</td>
+							<td>$@item.ListItemPriceEach</td>
+							<td>$@item.ListItemPrice</td>
+							<td>
+								<input type="button" value="&#10008" class="btn btn-sm btn-danger" onclick="confirmDelete(event,@itemCount)" />
+							</td>
+							@{
+								totalPrice += item.ListItemPrice;
+							}
+
+						</tr>
+						itemCount++;
+					}
+				}
+
+			</tbody>
+		</table>
+
+	}
+
+	<div class="d-flex justify-content-end flex-column align-items-end">
+		<div class="mb-3"><b>Total List Price: </b>$@totalPrice</div>
+		<button type="button" value="Save Changes" id="btnEdit" class="btn btn-outline-dark" onclick="handleEditSubmit(event)">Save Changes</button>
+	</div>
+
+
+	<br />
+	<br />
+
+	<div id="AddItemContainer">
+		<h5>Add a new item to your list</h5>
+		<div class="flex-row">
+			<table class="table">
+				<tbody>
+					<tr>
+						<td>
+							@Html.DropDownList("newItemName", new SelectList(allProducts, "ItemName", "ItemName"),
+							"Select an item...", new { @class = "form-control", placeholder = "Select an item...", @id = "ListItemName"})
+
+						</td>
+
+						<td>
+							<input type="number" name="newItemQuantity" class="form-control form-input" placeholder="Enter item quantity" min="1" id="ListItemQuantity">
+						</td>
+						<td>
+							<div class="d-flex justify-content-end">
+								<button value="Add Item" id="btnAddItem" class="btn ms-5 btn-outline-dark form-input" onclick="addItem(event)">Add Item</button>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+
+			</table>
+		</div>
+	</div>
+	<br />
+
+</div>
+
+
+
+

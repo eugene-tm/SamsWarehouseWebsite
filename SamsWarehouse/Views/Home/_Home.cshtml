@@ -1,0 +1,151 @@
+﻿@model IEnumerable<SamsWarehouse.Models.ShoppingListViewModel>
+
+
+<div class="text-center mb-4 d-flex flex-row justify-content-center align-items-center">
+	<img src="/media/Sams Warehouse Shopping Cart.svg" class="card-img-top rotateAnimation" alt="Sam's Warehouse Logo" style="width: 12%; margin: 0 auto">
+</div>
+
+<!-- Displays a card if there are not lists in the database for this user-->
+@if (Model.Count() < 1)
+{
+	<div class="card mb-5 shadow">
+		<div class="card-header" style="background-color: var(--color-2); color: var(--shade)  !important">
+			Get Started
+		</div>
+		<div class="card-body">
+			<h5 class="card-title">You currently have 0 shopping lists</h5>
+			<p class="card-text">Click the button below to create a shopping list!</p>
+			<a onclick="showNewListModal()" class="btn btn-outline-dark">Create Shopping List</a>
+		</div>
+	</div>
+}
+
+<!-- Displays a welcome back card if a user has at least one list -->
+@if (Model.Count() >= 1)
+{
+	<div class="card mb-5 shadow">
+		<div class="card-header" style="background-color: var(--color-2); color: var(--shade) !important">
+			Welcome Back
+		</div>
+		<div class="card-body d-flex justify-content-between align-items-center">
+			<div>
+				<h5 class="card-title">You currently have @Model.Count() shopping lists</h5>
+				<p class="card-text">We hope you're enjoying our website. Please feel free to provide feedback.</p>
+			</div>
+			<div>
+				<a class="btn btn-outline-dark" onclick="showNewListModal()">Start a New List</a>
+			</div>
+		</div>
+	</div>
+}
+
+<div class="card-container d-flex flex-wrap justify-content-center">
+	@foreach (var list in Model)
+	{
+		<div class="m-2 single-card col-3">
+			<div class="card shadow">
+				<div class="card-header" style="background-color: var(--color-2); color: var(--shade)  !important">
+					<b>@list.ListName</b> - @list.ListDate.ToString("dd MMM yyyy")
+				</div>
+				<ul class="list-group list-group-flush">
+					<!-- Cuts the list off after 3 items to ensure the cards aren't too long on screen-->
+					@if (list.ListItems.Count() >= 3)
+					{
+
+						@for (int i = 0; i < 3; i++)
+						{
+							<li class="list-group-item text-center">@list.ListItems[i].Item.ItemName</li>
+						}
+						<!-- Displays how many more items are in the full list -->
+						<li class="list-group-item text-center"><i>+ @(list.ListItems.Count() - 3) more items</i></li>
+
+					}
+
+					@if (list.ListItems.Count() < 3)
+					{
+						@foreach (var item in list.ListItems)
+						{
+							<li class="list-group-item text-center">@item.Item.ItemName</li>
+						}
+
+					}
+
+					<a class="btn btn-outline-dark m-2" onclick="showListModal(@list.Id)"><b>View Full List</b></a>
+				</ul>
+			</div>
+		</div>
+	}
+
+</div>
+
+
+
+
+<!-- MODALS ONLY BELOW -->
+
+<div class="modal" tabindex="-1" id="SettingsModal">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Display Setting</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body d-flex justify-content-center">
+				<input type="button" value="Toggle Dark Mode" class="btn btn-secondary" onclick="toggleDarkMode()" />
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div class="modal" tabindex="-1" id="ListModal">
+	<div class="modal-dialog modal-dialog modal-dialog-centered modal-lg">
+		<div class="modal-content">
+			<div class="modal-header" id="ModalTitle">
+				<h6 class="modal-title"></h6>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body" id="ModalBody">
+				Modal Content
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal" tabindex="-1" id="NewListNameModal">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Name Your List</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+
+			<form class="m-3">
+				<div class="mb-3">
+					<input class="form-control" id="NewListName">
+				</div>
+
+				<button class="btn btn-outline-dark" onclick="createNewList(event)">Create List</button>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="modal" tabindex="-1" id="EditNameModal">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Edit Your List Name</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+
+			<form class="m-3">
+				<div class="mb-3">
+					<input class="form-control" id="EditListName" >
+				</div>
+
+				<button class="btn btn-outline-dark" onclick="editListName(event)">Change</button>
+			</form>
+		</div>
+	</div>
+</div>
